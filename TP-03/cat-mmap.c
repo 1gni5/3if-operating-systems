@@ -12,7 +12,6 @@ void cat_file(char* filename)
     // Ouvre le fichier
     int fd = open(filename, O_RDWR);
 
-
     // Vérifie que le fichier est ouvert
     if (fd == -1)
     {
@@ -27,7 +26,7 @@ void cat_file(char* filename)
     // Map le contenu du fichier en mémoire
     char* file_content = (char*)mmap(NULL, filesize, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0);
 
-    // Affiche le contenu du fichier
+    // Affiche le contenu du fichier sur la sortie standard.
     write(1, file_content, filesize);
 
     // Supprime la zone de mémoire
@@ -39,11 +38,9 @@ void cat_file(char* filename)
 
 int main(int argc, char* argv[])
 {
+    // Parcours les fichiers passés en paramètre
     for(int i=1; i<argc ; i++)
-    {
-        printf("%s\n",argv[i]);
-        cat_file(argv[i]);
-    }    
+    { cat_file(argv[i]); }    
 
     return 0;
 }

@@ -9,37 +9,32 @@
 
 void cat_file(char* filename)
 {
-    int fp = open(filename, O_RDWR);
+    // Ouvre le fichier
+    int fd = open(filename, O_RDWR);
 
     // Vérifie que le fichier est ouvert
-    if (fp == -1)
+    if (fd == -1)
     {
         printf("Une erreur est survenue.\n");
         exit(1);
     }
 
     // Réserver la mémoire pour un buffer de lecture
-    char buffer;
+    char buffer; // Réserve un seul charactère sinon contenu manquant.
 
-    while (read(fp, &buffer, 1) != 0)
-    {
-        printf("%c", buffer);
-    }
-
-    printf("\n");
-
+    // Parcours l'ensemble du fichier
+    while (read(fd, &buffer, 1) != 0)
+    { printf("%c", buffer); }
 
     // Ferme le fichier
-    close(fp);
+    close(fd);
 }
 
 int main(int argc, char* argv[])
 {
+    // Parcours tout les fichiers passé en paramètre
     for(int i=1; i<argc ; i++)
-    {
-        printf("%s\n",argv[i]);
-        cat_file(argv[i]);
-    }    
+    { cat_file(argv[i]); }    
 
     return 0;
 }
