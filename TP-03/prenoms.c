@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
 typedef struct {
     int sexe; // 1=Garcon, 2=Fille
@@ -159,6 +160,9 @@ int main(int argc, char **argv)
     // Map le contenu du fichier en mémoire
     tuple* file_content = (tuple*)mmap(NULL, filesize, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0);
 
+    // Test si l'allocation s'est bien déroulée
+    assert(file_content != MAP_FAILED);
+    
     // Calcul le nombre de tuple dans le fichier
     size_t nb_tuple = filesize / sizeof(tuple);
     printf("Nombre total de tuple: %zu\n", nb_tuple);

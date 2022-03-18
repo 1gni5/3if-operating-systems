@@ -13,11 +13,15 @@ void cat_file(char* filename)
     FILE *fp = fopen(filename, "r");
 
     // Vérifie que le fichier est ouvert
-    if (fp == NULL)
-    {
-        printf("Une erreur est survenue.\n");
-        exit(1);
-    }
+    assert(fp != NULL);
+
+    // Version plus longue, affiche l'origine de l'erreur sur stderr
+    // Abandonnée ici par soucis de simplicité 
+    // if (fp == NULL)
+    // {
+    //     perror("Erreur: ");
+    //     exit(1);
+    // }
 
     char c;
     // Parcours le fichier et affiche son contenu

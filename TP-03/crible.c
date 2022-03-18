@@ -49,11 +49,7 @@ int main(int argc, char **argv)
     char* crible = (char*)mmap(NULL, n, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED, 0, 0);
     
     // Test si l'allocation s'est bien déroulée
-    if (crible == MAP_FAILED)
-    {
-        printf("Une erreur s'est produite!\n");
-        return(1);
-    }
+    assert(crible != MAP_FAILED);
 
     // Initialise le crible
     for(int i=0; i<n; i++)
@@ -62,21 +58,13 @@ int main(int argc, char **argv)
     }
 
     // Créer n-2 processus enfants
-    int pid = 0, num;
-    for (int i = 2; i < n; i++)
-    {
-        pid = fork();
+    for (int i = 2; i < n; i++) {
 
-        // Les processus enfants sortent de la boucle 
-        // + conserve leur nombre à traiter
-        if (pid == 0) {num = i; break;}
-    }
-
-    // Calcul des nombres premiers par les processus enfants
-    if (pid == 0) 
-    {
-        rayer_multiples(crible, n, num);
-        exit(0); // Terminaison des processus enfants
+        // Créer un nouveau processus + calcul des multiples de i
+        if (fork() == 0) {
+            rayer_multiples(crible, n, i);
+            exit(0); // Évite l'explosion de processus
+        }
     }
 
     // Attends que les processus enfants se terminent

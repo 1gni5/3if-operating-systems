@@ -10,21 +10,17 @@
 void cat_file(char* filename)
 {
     // Ouvre le fichier
-    int fd = open(filename, O_RDWR);
+    int fd = open(filename, O_RDONLY);
 
     // Vérifie que le fichier est ouvert
-    if (fd == -1)
-    {
-        printf("Une erreur est survenue.\n");
-        exit(1);
-    }
+    assert(fd != -1);
 
     // Réserver la mémoire pour un buffer de lecture
     char buffer; // Réserve un seul charactère sinon contenu manquant.
 
     // Parcours l'ensemble du fichier
     while (read(fd, &buffer, 1) != 0)
-    { printf("%c", buffer); }
+    { write(1, &buffer, 1); }
 
     // Ferme le fichier
     close(fd);
