@@ -22,8 +22,8 @@ bag_t * bb_create(int size)
     bag->is_closed = 0;
 
     // initialize semaphores
-    sem_init(&(bag->sem_cons), 0, 0); // there's no item in the bag
-    sem_init(&(bag->sem_prod), 0, size - 1); // bag is empty at start
+    sem_init(&(bag->full_slot), 0, 0); // there's no item in the bag
+    sem_init(&(bag->empty_slot), 0, size); // bag is empty at start
     sem_init(&(bag->mutex), 0, 1); // mutex to protect the bag
 
     return bag;
@@ -31,43 +31,50 @@ bag_t * bb_create(int size)
 
 void bb_add(bag_t * bag, void * element)
 {
-    assert(bag != NULL);                 // sanity check
+    assert(bag != NULL); // Sanity check
+        
+    assert( bag-> is_closed == 0 ); // Adding to a closed bag is an error
 
-    // while( bag->count >= bag->size ) { } // CAUTION: this synchronization is bogus
-
-    sem_wait(&(bag->sem_prod)); // wait for an empty slot
+    sem_wait(&(bag->empty_slot)); // Wait for an empty slot
     
-    sem_wait(&(bag->mutex)); // lock the bag
-    assert( bag-> is_closed == 0 ); // adding to a closed bag is an error
-    assert( bag->count < bag->size ); // sanity check
-    // sem_post(&(bag->mutex)); // unlock the bag
-
-    // sem_wait(&(bag->mutex)); // lock the bag
+    sem_wait(&(bag->mutex));
+    assert( bag->count < bag->size ); // Sanity check
     bag->elem[bag->count] = element;
     bag->count += 1;
-    sem_post(&(bag->mutex)); // unlock the bag
+    sem_post(&(bag->mutex));
 
-    sem_post(&(bag->sem_cons)); // signal that there's an item in the bag
+    sem_post(&(bag->full_slot)); // signal that there's an item in the bag
 }
 
 void * bb_take(bag_t *bag)
 {
-    assert(bag != NULL); // sanity check
+    assert(bag != NULL); // Sanity check
 
-    // while( bag->count <= 0 ) { } // CAUTION: this synchronization is bogus
-    sem_wait(&(bag->sem_cons));  // wait for an item
+    sem_wait(&(bag->mutex));
+    if (bag->is_closed == 1 && bag->count == 0)
+    {
+        sem_post(&(bag->mutex));
+        return NULL;
+    }
+    sem_post(&(bag->mutex));
 
-    sem_wait(&(bag->mutex)); // lock the bag
-    assert( bag->count > 0); // sanity check
-    // sem_post(&(bag->mutex)); // unlock the bag
+    sem_wait(&(bag->full_slot)); // Wait for an item in the bag
 
-    // sem_wait(&(bag->mutex)); // lock the bag
+    sem_wait(&(bag->mutex));
+    // Process has ended, but I've been sleeping
+    if (bag->count == 0)
+    {
+        sem_post(&(bag->mutex));
+        return NULL;
+    }
+
+    assert( bag->count > 0); // Sanity check
     bag->count -= 1;
     void *r = bag->elem[bag->count];
     bag->elem[bag->count] = NULL;
-    sem_post(&(bag->mutex)); // unlock the bag
+    sem_post(&(bag->mutex));
 
-    sem_post(&(bag->sem_prod)); // signal that space is available
+    sem_post(&(bag->empty_slot)); // Signal that there's an empty slot
     
     usleep(10);// artificial delay to increase the occurence of race conditions
     return r;
@@ -75,5 +82,14 @@ void * bb_take(bag_t *bag)
 
 void bb_close(bag_t *bag, int N)
 {
-    assert("not implemented" == 0);
+    assert(bag->is_closed == 0);
+    bag->is_closed = 1;
+
+    sem_wait(&(bag->mutex));
+    for (int i = 0; i < N; i++)
+    {
+        // Libère les éléments restants dans le sac
+        sem_post(&(bag->full_slot));
+    }
+    sem_post(&(bag->mutex));
 }
