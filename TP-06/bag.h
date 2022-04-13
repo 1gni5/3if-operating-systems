@@ -10,6 +10,10 @@ typedef struct {
     void ** elem;  // array of pointer to elements (each pointer has type 'void*' )
     int     count; // number of elements currently in the buffer
 
+    sem_t   sem_cons; // semaphore for the consumer
+    sem_t   sem_prod; // semaphore for the producer
+    sem_t   mutex;    // mutex for the buffer
+
     int is_closed; // boolean. cf last exercice
 } bag_t ;
 

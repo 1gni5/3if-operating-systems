@@ -10,6 +10,7 @@
 // shared variables
 int sum;
 bag_t *bag;
+sem_t mutex;
 
 // each consumer thread runs this function
 void *consumer(void *arg)
@@ -22,7 +23,10 @@ void *consumer(void *arg)
         int *box = bb_take(bag);
         assert( box != NULL );
 
+        // Critical section
+        sem_wait(&mutex);
         sum = sum + *box;
+        sem_post(&mutex);
         
         free(box);
     }
@@ -69,6 +73,9 @@ int main(int argc, char ** argv)
     assert(bag != NULL);
     sum=0;
 
+    // initialize semaphores
+    sem_init(&mutex, 0, 1);
+
     int r;
     for(int pnum = 0 ; pnum < N ; pnum++)
     {
@@ -93,7 +100,19 @@ int main(int argc, char ** argv)
         }
     }
 
-    sleep(2);
+    // sleep(2); 
+
+    // Join producer threads
+    for(int pnum = 0 ; pnum < N ; pnum++)
+    {
+        r=pthread_join(prod[pnum], NULL);
+        if ( r )
+        {
+            printf("error: could not join producer %d\n",pnum);
+            exit(1);
+        }
+    }
+
     printf("theroretical result=%d\n",N*(N+1)/2);
     printf("actual computed sum=%d\n", sum);
     return 0;
